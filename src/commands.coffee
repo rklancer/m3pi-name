@@ -1,12 +1,70 @@
-# `coffee src/commands.coffee` or `node lib/commands.js`
+# Usage
+# `coffee src/commands.coffee logo > richard.logo`
+# `coffee src/commands.coffee m3pi > main.cpp`
 
-console.log """
-  penup
-  right 90
-  back 250
-  left 90
-  pendown
-"""
+left = right = back = forward = ->
+
+round = (x) ->
+  Math.round(x*100)/100
+
+degrees = (theta) ->
+  theta * 180 / Math.PI
+  
+# keep angles within (-PI, PI]
+limit = (radians) ->
+  radians - 2*Math.PI * Math.round(radians / (2*Math.PI))
+
+issueCommandsFor = (vertices) ->
+  # where am i?
+  [x, y] = vertices[0]
+
+  # in which direction am i pointed?
+  theta = Math.PI/2
+
+  for vertex in vertices[1..vertices.length]
+    [x1, y1] = vertex
+    [dx, dy] = [x1-x, y1-y]
+    r = Math.sqrt dx*dx+dy*dy
+  
+    theta1 = Math.atan2 dy, dx
+    dtheta = limit(theta1 - theta) # -PI < dtheta < PI
+  
+    # helpers that also update theta
+    goleft = (angle) ->
+      if angle > 0.001
+        left angle
+        theta = limit(theta + angle)
+  
+    goright = (angle) ->
+      if angle > 0.001
+        theta = limit(theta - angle)
+        right angle
+
+    if 0 <= dtheta <= Math.PI/2 
+      # turn left, go forward
+      goleft dtheta
+      forward r
+
+    else if Math.PI/2 <= dtheta < Math.PI
+      # turn right, go backward
+      goright Math.PI - dtheta
+      back r
+              
+    else if -Math.PI/2 <= dtheta <= 0
+      # turn right, go forward
+      goright -dtheta
+      forward r
+  
+    else if -Math.PI <= dtheta < -Math.PI/2
+      # turn left, go backward
+      goleft dtheta + Math.PI
+      back r
+  
+    else
+      console.error "WHOOPS; dtheta = #{dtheta}"
+
+    [x, y] = [x1, y1]
+
 
 vertices = [
   [   0, 0]
@@ -39,71 +97,88 @@ vertices = [
   [  22, 0]
 ]
 
-left = (theta) ->
-  console.log "left #{round(degrees(theta))}" if Math.abs(theta) > 0.01
-  
-right = (theta) -> 
-  console.log "right #{round(degrees(theta))}" if Math.abs(theta) > 0.01
-  
-back = (r) ->
-  console.log "back #{round r*20}" if Math.abs(r) > 0.01
+type = process.argv[2]
 
-forward = (r) ->
-  console.log "forward #{round r*20}" if Math.abs(r) > 0.01
-  
-round = (x) ->
-  Math.round(x*100)/100
-  
-degrees = (theta) ->
-  theta * 180 / Math.PI
+if type == 'logo'
+  # try this out at http://www.amberfrog.com/logo/
+  console.log """
+    penup
+    right 90
+    back 250
+    left 90
+    pendown
+  """
 
-# where am i?
-# in which direction am i pointed?
+  left = (theta) ->
+    console.log "left #{round(degrees(theta))}"
 
-[x, y] = vertices[0]
-theta = Math.PI/2
+  right = (theta) -> 
+    console.log "right #{round(degrees(theta))}"
 
-limit = (radians) ->
-  radians - 2*Math.PI * Math.round(radians / (2*Math.PI))
-    
-for vertex in vertices[1..vertices.length]
-  [x1, y1] = vertex
-  [dx, dy] = [x1-x, y1-y]
-  r = Math.sqrt dx*dx+dy*dy
-  
-  theta1 = Math.atan2 dy, dx
-  dtheta = limit(theta1 - theta) # -PI < dtheta < PI
-  
-  # helpers that also update theta
-  goleft = (angle) ->
-    left angle
-    theta = limit(theta + angle)
-  
-  goright = (angle) ->
-    right angle
-    theta = limit(theta - angle)
+  back = (r) ->
+    console.log "back #{round r*20}"
 
-  if 0 <= dtheta <= Math.PI/2 
-    # turn left, go forward
-    goleft dtheta
-    forward r
+  forward = (r) ->
+    console.log "forward #{round r*20}"
 
-  else if Math.PI/2 <= dtheta < Math.PI
-    # turn right, go backward
-    goright Math.PI - dtheta
-    back r
-              
-  else if -Math.PI/2 <= dtheta <= 0
-    # turn right, go forward
-    goright -dtheta
-    forward r
+  issueCommandsFor vertices
   
-  else if -Math.PI <= dtheta < -Math.PI/2
-    # turn left, go backward
-    goleft dtheta + Math.PI
-    back r
-  
-  else
-    console.error "WHOOPS; dtheta = #{dtheta}"
 
-  [x, y] = [x1, y1]
+if type == 'm3pi'
+  console.log """
+    #include "mbed.h"
+    #include "m3pi.h"
+
+    m3pi m3pi;
+
+    int main() {
+
+        m3pi.locate(0,1);
+        m3pi.printf("LO World");
+
+        wait (2.0);
+        
+  """
+  HALF_SPEED_ROTATION_RATE = 720 # degrees/sec
+  ROTATION_SPEED_FRACTION  = 0.1  # as a fraction of "full speed"
+  ROTATION_RATE = 2 * HALF_SPEED_ROTATION_RATE * ROTATION_SPEED_FRACTION  # degrees/sec
+
+  HALF_SPEED_TRANSLATION_RATE = 18.5 # inches/sec
+  TRANSLATION_SPEED_FRACTION  = 0.1  # as a fraction of "full speed"
+  TRANSLATION_RATE = 2 * HALF_SPEED_TRANSLATION_RATE * TRANSLATION_SPEED_FRACTION # inches/sec
+
+  rotationWait = (theta) ->
+    degrees(theta) / ROTATION_RATE    # degrees / (degrees/sec) -> sec
+
+  translationWait = (r) ->
+    # 1 unit in r = 2 inches...
+    2*r / TRANSLATION_RATE            # inches / (inches/sec) -> sec
+
+  left = (theta) ->
+    console.log "    // left #{round degrees theta} degrees"
+    console.log "    m3pi.left(#{ROTATION_SPEED_FRACTION});"
+    console.log "    wait(#{rotationWait(theta)});"
+    console.log ""
+
+  right = (theta) ->
+    console.log "    // right #{round degrees theta} degrees"   
+    console.log "    m3pi.right(#{ROTATION_SPEED_FRACTION});"
+    console.log "    wait(#{rotationWait(theta)});"
+    console.log ""
+
+  back = (r) ->
+    console.log "    // backwards #{round(2*r)} inches"
+    console.log "    m3pi.backward(#{TRANSLATION_SPEED_FRACTION});"
+    console.log "    wait(#{translationWait(r)});"
+    console.log ""    
+
+  forward = (r) ->
+    console.log "    // forwards #{round(2*r)} inches"    
+    console.log "    m3pi.forward(#{TRANSLATION_SPEED_FRACTION});"
+    console.log "    wait(#{translationWait(r)});"
+    console.log ""
+
+  issueCommandsFor vertices
+
+  console.log "    m3pi.stop();"
+  console.log "}\n"
