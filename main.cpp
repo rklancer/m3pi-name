@@ -38,13 +38,13 @@ int main() {
     m3pi.right(0.1);
     wait(0.5592894291109332);
 
-    // backwards 3 inches
+    // backwards 4 inches
     m3pi.backward(0.1);
-    wait(0.8108108108108107);
+    wait(1.081081081081081);
 
-    // forwards 1 inches
+    // forwards 2 inches
     m3pi.forward(0.1);
-    wait(0.27027027027027023);
+    wait(0.5405405405405405);
 
     // left 80.54 degrees
     m3pi.left(0.1);
