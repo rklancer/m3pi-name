@@ -2,6 +2,8 @@
 # `coffee src/commands.coffee logo > richard.logo`
 # `coffee src/commands.coffee m3pi > main.cpp`
 
+process ?= { argv: 'x x logo' }
+
 left = right = back = forward = ->
 
 # variance 1, mean 0
@@ -21,7 +23,9 @@ degrees = (theta) ->
 limit = (radians) ->
   radians - 2*Math.PI * Math.round(radians / (2*Math.PI))
 
-issueCommandsFor = (vertices) ->
+issueCommandsFor = (vertices, sd) ->
+  sd ?= 0
+  
   # where am i?
   [x, y] = vertices[0]
 
@@ -34,39 +38,38 @@ issueCommandsFor = (vertices) ->
     r = Math.sqrt dx*dx+dy*dy
   
     theta1 = Math.atan2 dy, dx
-    factor = 1 + pseudoGauss()/10
     dtheta = limit(theta1 - theta) # -PI < dtheta < PI
   
     # helpers that also update theta
     goleft = (angle) ->
       if angle > 0.001
         theta = limit(theta + angle)
-        left(angle * (1+pseudoGauss()/10))
+        left(angle * (1+pseudoGauss()*sd))
   
     goright = (angle) ->
       if angle > 0.001
         theta = limit(theta - angle)
-        right(angle * (1+pseudoGauss()/10))
+        right(angle * (1+pseudoGauss()*sd))
 
     if 0 <= dtheta <= Math.PI/2 
       # turn left, go forward
       goleft dtheta
-      forward(r * (1+pseudoGauss()/10))
+      forward(r * (1+pseudoGauss()*sd))
 
     else if Math.PI/2 <= dtheta < Math.PI
       # turn right, go backward
       goright Math.PI - dtheta
-      back(r * (1+pseudoGauss()/10))
+      back(r * (1+pseudoGauss()*sd))
               
     else if -Math.PI/2 <= dtheta <= 0
       # turn right, go forward
       goright -dtheta
-      forward(r * (1+pseudoGauss()/10))
+      forward(r * (1+pseudoGauss()*sd))
   
     else if -Math.PI <= dtheta < -Math.PI/2
       # turn left, go backward
       goleft dtheta + Math.PI
-      back(r * (1+pseudoGauss()/10))
+      back(r * (1+pseudoGauss()*sd))
   
     else
       console.error "WHOOPS; dtheta = #{dtheta}"
@@ -117,6 +120,7 @@ if type == 'logo'
     pendown
   """
 
+  sd = parseFloat(process.argv[3], 10) if process.argv[3]?
   left = (theta) ->
     console.log "left #{round(degrees(theta))}"
 
@@ -129,7 +133,7 @@ if type == 'logo'
   forward = (r) ->
     console.log "forward #{round r*20}"
 
-  issueCommandsFor vertices
+  issueCommandsFor vertices, sd
   
 
 if type == 'm3pi'
