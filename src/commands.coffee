@@ -4,6 +4,13 @@
 
 left = right = back = forward = ->
 
+pseudoGauss = ->
+  a = 0
+  n = 20
+  a = a + Math.random() for i in [1..n]
+  (a - n/2) / Math.sqrt(n)
+
+
 round = (x) ->
   Math.round(x*100)/100
 
@@ -27,38 +34,39 @@ issueCommandsFor = (vertices) ->
     r = Math.sqrt dx*dx+dy*dy
   
     theta1 = Math.atan2 dy, dx
+    factor = 1 + pseudoGauss()/10
     dtheta = limit(theta1 - theta) # -PI < dtheta < PI
   
     # helpers that also update theta
     goleft = (angle) ->
       if angle > 0.001
-        left angle
         theta = limit(theta + angle)
+        left(angle * (1+pseudoGauss()/3))
   
     goright = (angle) ->
       if angle > 0.001
         theta = limit(theta - angle)
-        right angle
+        right(angle * (1+pseudoGauss()/3))
 
     if 0 <= dtheta <= Math.PI/2 
       # turn left, go forward
       goleft dtheta
-      forward r
+      forward(r * (1+pseudoGauss()/3))
 
     else if Math.PI/2 <= dtheta < Math.PI
       # turn right, go backward
       goright Math.PI - dtheta
-      back r
+      back(r * (1+pseudoGauss()/3))
               
     else if -Math.PI/2 <= dtheta <= 0
       # turn right, go forward
       goright -dtheta
-      forward r
+      forward(r * (1+pseudoGauss()/3))
   
     else if -Math.PI <= dtheta < -Math.PI/2
       # turn left, go backward
       goleft dtheta + Math.PI
-      back r
+      back(r * (1+pseudoGauss()/3))
   
     else
       console.error "WHOOPS; dtheta = #{dtheta}"
