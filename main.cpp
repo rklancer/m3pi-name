@@ -70,6 +70,10 @@ int main() {
     m3pi.forward(0.1);
     wait(3.2879797461071454);
 
+    // backwards 12.17 inches
+    m3pi.backward(0.1);
+    wait(3.2879797461071454);
+
     // right 80.54 degrees
     m3pi.right(0.1);
     wait(0.5592894291109333);
@@ -84,15 +88,15 @@ int main() {
 
     // left 80.54 degrees
     m3pi.left(0.1);
-    wait(0.5592894291109332);
+    wait(0.5592894291109333);
 
-    // backwards 12.17 inches
-    m3pi.backward(0.1);
+    // forwards 12.17 inches
+    m3pi.forward(0.1);
     wait(3.2879797461071454);
 
     // right 80.54 degrees
     m3pi.right(0.1);
-    wait(0.5592894291109332);
+    wait(0.5592894291109333);
 
     // forwards 8 inches
     m3pi.forward(0.1);
@@ -100,19 +104,19 @@ int main() {
 
     // left 80.54 degrees
     m3pi.left(0.1);
-    wait(0.5592894291109333);
+    wait(0.5592894291109332);
 
-    // forwards 12.17 inches
-    m3pi.forward(0.1);
+    // backwards 12.17 inches
+    m3pi.backward(0.1);
     wait(3.2879797461071454);
 
-    // backwards 6.08 inches
-    m3pi.backward(0.1);
+    // forwards 6.08 inches
+    m3pi.forward(0.1);
     wait(1.6439898730535727);
 
     // right 80.54 degrees
     m3pi.right(0.1);
-    wait(0.5592894291109333);
+    wait(0.5592894291109332);
 
     // forwards 6 inches
     m3pi.forward(0.1);
