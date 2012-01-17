@@ -6,7 +6,7 @@ m3pi m3pi;
 int main() {
 
     m3pi.locate(0,1);
-    m3pi.printf("LO World");
+    m3pi.printf("YO YO YO!");
 
     wait (2.0);
     
