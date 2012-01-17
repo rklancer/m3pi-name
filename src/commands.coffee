@@ -4,12 +4,12 @@
 
 left = right = back = forward = ->
 
+# variance 1, mean 0
 pseudoGauss = ->
   a = 0
   n = 20
   a = a + Math.random() for i in [1..n]
-  (a - n/2) / Math.sqrt(n)
-
+  (a - n / 2) * Math.sqrt(12/n)   # variance of sum of n uniform random variables on 0..1 is n/12
 
 round = (x) ->
   Math.round(x*100)/100
@@ -41,32 +41,32 @@ issueCommandsFor = (vertices) ->
     goleft = (angle) ->
       if angle > 0.001
         theta = limit(theta + angle)
-        left(angle * (1+pseudoGauss()/3))
+        left(angle * (1+pseudoGauss()/10))
   
     goright = (angle) ->
       if angle > 0.001
         theta = limit(theta - angle)
-        right(angle * (1+pseudoGauss()/3))
+        right(angle * (1+pseudoGauss()/10))
 
     if 0 <= dtheta <= Math.PI/2 
       # turn left, go forward
       goleft dtheta
-      forward(r * (1+pseudoGauss()/3))
+      forward(r * (1+pseudoGauss()/10))
 
     else if Math.PI/2 <= dtheta < Math.PI
       # turn right, go backward
       goright Math.PI - dtheta
-      back(r * (1+pseudoGauss()/3))
+      back(r * (1+pseudoGauss()/10))
               
     else if -Math.PI/2 <= dtheta <= 0
       # turn right, go forward
       goright -dtheta
-      forward(r * (1+pseudoGauss()/3))
+      forward(r * (1+pseudoGauss()/10))
   
     else if -Math.PI <= dtheta < -Math.PI/2
       # turn left, go backward
       goleft dtheta + Math.PI
-      back(r * (1+pseudoGauss()/3))
+      back(r * (1+pseudoGauss()/10))
   
     else
       console.error "WHOOPS; dtheta = #{dtheta}"
