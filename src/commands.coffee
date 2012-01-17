@@ -23,9 +23,10 @@ degrees = (theta) ->
 limit = (radians) ->
   radians - 2*Math.PI * Math.round(radians / (2*Math.PI))
 
-issueCommandsFor = (vertices, sd) ->
-  sd ?= 0
-  
+issueCommandsFor = (vertices, bias, sd) ->
+  bias ?= 1  # bias in the rotation rate (bias=1.1 -> actual turn angle is 1.1x larger than requested)
+  sd   ?= 0  # standard deviation of Gaussian error in robot translation and rotation
+    
   # where am i?
   [x, y] = vertices[0]
 
@@ -39,27 +40,33 @@ issueCommandsFor = (vertices, sd) ->
   
     theta1 = Math.atan2 dy, dx
     dtheta = limit(theta1 - theta) # -PI < dtheta < PI
-  
+    
+    noisyAngle = (angle) ->
+      angle * bias * (1+pseudoGauss()*sd)
+    
+    noisyLength = (length) ->
+      length * (1+pseudoGauss()*sd)
+    
     # helpers that also update theta
     goleft = (angle) ->
       if angle > 0.001
         theta = limit(theta + angle)
-        left(angle * (1+pseudoGauss()*sd))
+        left noisyAngle angle
   
     goright = (angle) ->
       if angle > 0.001
         theta = limit(theta - angle)
-        right(angle * (1+pseudoGauss()*sd))
+        right noisyAngle angle
 
     if 0 <= dtheta <= Math.PI/2 
       # turn left, go forward
       goleft dtheta
-      forward(r * (1+pseudoGauss()*sd))
+      forward noisyLength r
 
     else if Math.PI/2 <= dtheta < Math.PI
       # turn right, go backward
       goright Math.PI - dtheta
-      back(r * (1+pseudoGauss()*sd))
+      back noisyLength r
               
     else if -Math.PI/2 <= dtheta <= 0
       # turn right, go forward
@@ -114,13 +121,16 @@ if type == 'logo'
   # try this out at http://www.amberfrog.com/logo/
   console.log """
     penup
+    back 200
     right 90
     back 250
     left 90
     pendown
   """
 
-  sd = parseFloat(process.argv[3], 10) if process.argv[3]?
+  bias = parseFloat(process.argv[3], 10) if process.argv[3]?
+  sd   = parseFloat(process.argv[4], 10) if process.argv[4]?
+  
   left = (theta) ->
     console.log "left #{round(degrees(theta))}"
 
@@ -133,7 +143,7 @@ if type == 'logo'
   forward = (r) ->
     console.log "forward #{round r*20}"
 
-  issueCommandsFor vertices, sd
+  issueCommandsFor vertices,  bias || 1, sd || 0
   
 
 if type == 'm3pi'
