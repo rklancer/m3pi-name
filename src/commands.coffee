@@ -1,5 +1,13 @@
 # `coffee src/commands.coffee` or `node lib/commands.js`
 
+console.log """
+  penup
+  right 90
+  back 250
+  left 90
+  pendown
+"""
+
 vertices = [
   [   0, 0]
   [   1, 6]
@@ -32,16 +40,16 @@ vertices = [
 ]
 
 left = (theta) ->
-  console.log "left #{round(degrees(theta))}"
+  console.log "left #{round(degrees(theta))}" if Math.abs(theta) > 0.01
   
 right = (theta) -> 
-  console.log "right #{round(degrees(theta))}"
+  console.log "right #{round(degrees(theta))}" if Math.abs(theta) > 0.01
   
 back = (r) ->
-  console.log "back #{round r*20}" 
+  console.log "back #{round r*20}" if Math.abs(r) > 0.01
 
 forward = (r) ->
-  console.log "forward #{round r*20}"
+  console.log "forward #{round r*20}" if Math.abs(r) > 0.01
   
 round = (x) ->
   Math.round(x*100)/100
@@ -55,23 +63,47 @@ degrees = (theta) ->
 [x, y] = vertices[0]
 theta = Math.PI/2
 
+limit = (radians) ->
+  radians - 2*Math.PI * Math.round(radians / (2*Math.PI))
+    
 for vertex in vertices[1..vertices.length]
   [x1, y1] = vertex
   [dx, dy] = [x1-x, y1-y]
   r = Math.sqrt dx*dx+dy*dy
   
   theta1 = Math.atan2 dy, dx
-  dtheta = theta1 - theta
-  if dtheta >  Math.PI then dtheta = dtheta - Math.PI
-  if dtheta < -Math.PI then dtheta = dtheta + Math.PI
+  dtheta = limit(theta1 - theta) # -PI < dtheta < PI
   
-  turn = if dtheta > 0 then () -> left(dtheta) else () -> right(-dtheta)
+  # helpers that also update theta
+  goleft = (angle) ->
+    left angle
+    theta = limit(theta + angle)
   
-  if Math.abs(dtheta - Math.PI) < 0.001
+  goright = (angle) ->
+    right angle
+    theta = limit(theta - angle)
+
+  if 0 <= dtheta <= Math.PI/2 
+    # turn left, go forward
+    goleft dtheta
+    forward r
+
+  else if Math.PI/2 <= dtheta < Math.PI
+    # turn right, go backward
+    goright Math.PI - dtheta
     back r
-  else
-    turn()
+              
+  else if -Math.PI/2 <= dtheta <= 0
+    # turn right, go forward
+    goright -dtheta
     forward r
   
-  theta = theta1
+  else if -Math.PI <= dtheta < -Math.PI/2
+    # turn left, go backward
+    goleft dtheta + Math.PI
+    back r
+  
+  else
+    console.error "WHOOPS; dtheta = #{dtheta}"
+
   [x, y] = [x1, y1]
